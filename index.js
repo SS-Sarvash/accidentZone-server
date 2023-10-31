@@ -21,10 +21,11 @@ app.get("/getdata", async (req, res) => {
 
 app.post("/postdata", async (req, res) => {
     try {
-      const { Status, Latitude, Longitude } = req.body;
+      const { status, latitude, longitude } = req.body;
+      console.log(status);
       const qry = await pool.query(
-        `INSERT INTO accidentZone(Status, Latitude, Longitude) values($1,$2,$3)`,
-        [Status, Latitude, Longitude]
+        `INSERT INTO accidentZone(status, latitude, longitude) values($1,$2,$3)`,
+        [status, latitude, longitude]
       );
       res.json(qry);
     } catch (error) {
