@@ -14,6 +14,17 @@ app.get("/getdata", async (req, res) => {
     try {
       const qry = await pool.query("SELECT * FROM accidentZone;");
       res.json(qry.rows);
+       
+    } catch (err) {
+      console.log(err.message);
+    }
+  });
+
+  app.get("/getstoreddata", async (req, res) => {
+    try {
+      const qry = await pool.query("SELECT * FROM storedData;");
+      res.json(qry.rows);      
+       
     } catch (err) {
       console.log(err.message);
     }
