@@ -9,7 +9,7 @@ app.use(cors());
 app.use(express.json());
 
 const port = process.env.PORT;
-
+var latitude,longitude;
 app.get("/getdata", async (req, res) => {
     try {
       const qry = await pool.query("SELECT * FROM accidentZone;");
@@ -48,6 +48,8 @@ app.post("/postdata", async (req, res) => {
     try {
       const { lat, long, accuracy } = req.body;
       console.log("lat: "+lat+" long: "+long+" acc: "+accuracy);
+      latitude=lat;
+      longitude=long;
       res.send("data received successfully");// due to this response sending , the server wont halt in receiving data;
     } catch (error) {
       console.log(error);
@@ -57,8 +59,27 @@ app.post("/postdata", async (req, res) => {
   app.post("/detect", async (req, res) => {
     try {
       const { code } = req.body;
-      console.log("code: "+code);
-      res.send("data received successfully");// due to this response sending , the server wont halt in receiving data;
+      console.log("code: " + code);
+      // const { lat, long } = code; 
+      const storedCoordinates = await pool.query("SELECT * FROM storedData;");
+      let foundWithinRange = false;
+      storedCoordinates.rows.forEach((coord) => {
+          const distanceInMeters = distance(latitude, coord.latitude, longitude, coord.longitude);
+          console.log("distance: "+distanceInMeters);
+          if (distanceInMeters <= 50) {
+            console.log("distance within 50: "+distanceInMeters);
+              foundWithinRange = true;
+          }
+      });
+      if (!foundWithinRange) {
+          await pool.query(
+              `INSERT INTO storedData(title, latitude, longitude) VALUES('New Zone', $1, $2);`,
+              [lat, long]
+          );
+          res.send("Coordinate inserted successfully.");
+      } else {
+          res.send("A coordinate was found within 50 meters. No insert operation performed.");
+      }
     } catch (error) {
       console.log(error);
     }
