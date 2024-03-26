@@ -59,32 +59,41 @@ app.post("/postdata", async (req, res) => {
 
   app.post("/detect", async (req, res) => {
     try {
-      const { code } = req.body;
-      console.log("code: " + code);
-      // const { lat, long } = code; 
-      const storedCoordinates = await pool.query("SELECT * FROM storedData;");
-      let foundWithinRange = false;
-      storedCoordinates.rows.forEach((coord) => {
-          const distanceInMeters = distance(lati, coord.latitude, longi, coord.longitude);
-          console.log("distance: "+distanceInMeters);
-          if (distanceInMeters <= 50) {
-            console.log("distance within 50: "+distanceInMeters);
-              foundWithinRange = true;
-          }
-      });
-      if (!foundWithinRange) {
-          await pool.query(
-              `INSERT INTO storedData(title, latitude, longitude) VALUES('New Zone', $1, $2);`,
-              [lati, longi]
-          );
-          res.send("Coordinate inserted successfully.");
-      } else {
-          res.send("A coordinate was found within 50 meters. No insert operation performed.");
-      }
+        const { code } = req.body;
+        console.log("code: " + code);
+        // Assuming code is an object containing lati and longi
+        // const { lati, longi } = code;
+        
+        // Check if lati and longi are defined
+        if (lati === undefined || longi === undefined) {
+            return res.status(400).send("Latitude or longitude is missing.");
+        }
+
+        const storedCoordinates = await pool.query("SELECT * FROM storedData;");
+        let foundWithinRange = false;
+        storedCoordinates.rows.forEach((coord) => {
+            const distanceInMeters = distance(lati, coord.latitude, longi, coord.longitude);
+            console.log("distance: " + distanceInMeters);
+            if (distanceInMeters <= 50) {
+                console.log("distance within 50: " + distanceInMeters);
+                foundWithinRange = true;
+            }
+        });
+        if (!foundWithinRange) {
+            await pool.query(
+                `INSERT INTO storedData(title, latitude, longitude) VALUES('New Zone', $1, $2);`,
+                [lati, longi]
+            );
+            res.send("Coordinate inserted successfully.");
+        } else {
+            res.send("A coordinate was found within 50 meters. No insert operation performed.");
+        }
     } catch (error) {
-      console.log(error);
+        console.log(error);
+        res.status(500).send("Internal server error.");
     }
-  });
+});
+
 
 
 
